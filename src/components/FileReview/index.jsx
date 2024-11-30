@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Stage, Layer, Rect, Image } from 'react-konva';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import useImage from 'use-image';
 import inovice1 from '../../assets/invoice1.jpg';
 import './index.less';
@@ -87,32 +88,45 @@ export default function FileReview() {
 	}, [image, annotations]);
 	return (
 		<main ref={containerRef} className="wrap">
-			<Stage width={containerDimensions.width} height={containerDimensions.height}>
-				<Layer shouldComponentUpdate={shouldUpdateLayer}>
-					<Image
-						x={size.x} // 图片的 X 坐标
-						y={size.y} // 图片的 Y 坐标
-						width={size.width} // 图片的宽度
-						height={size.height} // 图片的高度
-						image={image} // 渲染的图片
-						draggable
-						onDragMove={handleDragMove} // 监听图片的拖动事件
-					/>
-					{/* 渲染矩形框 */}
-					{annotations.map((annotation, index) => (
-						<Rect
-							key={index}
-							x={annotation.x}
-							y={annotation.y}
-							width={annotation.width}
-							height={annotation.height}
-							stroke={annotation.color}
-							strokeWidth={3}
-							dash={[10, 5]} // 虚线
-						/>
-					))}
-				</Layer>
-			</Stage>
+			<TransformWrapper initialScale={1} minScale={0.5} maxScale={2} wheel={{ step: 0.1 }}>
+				{({ zoomIn, zoomOut, resetTransform }) => (
+					<>
+						{/* <div className="controls">
+							<button onClick={zoomIn}>放大</button>
+							<button onClick={zoomOut}>缩小</button>
+							<button onClick={resetTransform}>重置</button>
+						</div> */}
+						<TransformComponent>
+							<Stage width={containerDimensions.width} height={containerDimensions.height}>
+								<Layer shouldComponentUpdate={shouldUpdateLayer}>
+									<Image
+										x={size.x} // 图片的 X 坐标
+										y={size.y} // 图片的 Y 坐标
+										width={size.width} // 图片的宽度
+										height={size.height} // 图片的高度
+										image={image} // 渲染的图片
+										draggable
+										onDragMove={handleDragMove} // 监听图片的拖动事件
+									/>
+									{/* 渲染矩形框 */}
+									{annotations.map((annotation, index) => (
+										<Rect
+											key={index}
+											x={annotation.x}
+											y={annotation.y}
+											width={annotation.width}
+											height={annotation.height}
+											stroke={annotation.color}
+											strokeWidth={3}
+											dash={[10, 5]} // 虚线
+										/>
+									))}
+								</Layer>
+							</Stage>
+						</TransformComponent>
+					</>
+				)}
+			</TransformWrapper>
 		</main>
 	);
 }
