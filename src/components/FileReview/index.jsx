@@ -1,28 +1,19 @@
 import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { Stage, Layer, Rect, Image } from 'react-konva';
+import ImgControlBtns from './components/ImgControlBtns';
 import useImage from 'use-image';
-import { Button } from 'antd';
-import DecimalStep from './components/DecimalStep';
-import RotateBtns from './components/RotateBtns';
+import ScanLoading from './components/ScanLoading';
 import inovice1 from '../../assets/invoice1.jpg';
 import './index.less';
 
-const defaultCurrentState = {
-	previousScale: 1,
-	scale: 1,
-	positionX: 0,
-	positionY: 0,
-};
 export default function FileReview() {
 	const containerRef = useRef(null);
 	const TransformWrapperRef = useRef(null);
-	const DecimalStepRef = useRef(null);
+	const ScanLoadingRef = useRef(null);
 	const [image] = useImage(inovice1); // 加载图片
 	const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 }); // 父容器的尺寸
 	const [size, setSize] = useState({ width: 0, height: 0, x: 0, y: 0 }); // 图片的尺寸和位置
-	const [currentState, setCurrentState] = useState(defaultCurrentState);
-
 	const annotations = useMemo(
 		() => [
 			// 管理注释框的位置
@@ -32,57 +23,32 @@ export default function FileReview() {
 		],
 		[]
 	);
-
-	// 更新父容器的尺寸
+	const handleChangeInputValue = (val) => {
+		switch (val) {
+			case 'increase':
+				TransformWrapperRef.current.zoomIn(0.25);
+				break;
+			case 'subtract':
+				TransformWrapperRef.current.zoomOut(0.25);
+				break;
+			case 'reset':
+				TransformWrapperRef.current.resetTransform();
+				break;
+			default:
+				break;
+		}
+	};
 	const updateSize = useCallback(() => {
 		if (containerRef.current) {
 			const { offsetWidth, offsetHeight } = containerRef.current;
 			if (containerDimensions.width !== offsetWidth || containerDimensions.height !== offsetHeight) {
-				setContainerDimensions({ width: offsetWidth, height: offsetHeight });
+				setContainerDimensions({ width: offsetWidth - 2, height: offsetHeight - 2 });
 			}
 		}
 	}, [containerDimensions.width, containerDimensions.height]);
-
-	// 还原图像原始尺寸
-	const resetImage = () => {
-		if (TransformWrapperRef.current) {
-			// @ts-ignore 还原为原始尺寸
-			TransformWrapperRef.current.resetTransform();
-			DecimalStepRef.current.onChange(1);
-			setCurrentState(defaultCurrentState);
-		}
-	};
-
-	// 滚轮控制缩放变化时的回调函数
-	const onWheelChange = (e) => {
-		if (DecimalStepRef.current) {
-			DecimalStepRef.current.onChange(e.state.scale);
-			setCurrentState(e.state);
-		}
-	};
-
-	const onPanningChange = (e) => {
-		if (DecimalStepRef.current) {
-			setCurrentState(e.state);
-		}
-	};
-
-	const handleZoomChange = (val) => {
-		if (TransformWrapperRef.current) {
-			if (val.sign === 'in') {
-				TransformWrapperRef.current.zoomIn(0.25);
-			} else if (val.sign === 'sub') {
-				TransformWrapperRef.current.zoomOut(0.25);
-			} else {
-				// setScale(val.val);
-				// const positionX = Math.ceil((size.width + currentState.positionX) / 2);
-				// const positionY = Math.ceil((size.height + currentState.positionY) / 2);
-				TransformWrapperRef.current.setTransform(50, 40, val.val, 0, 'easeOut');
-				console.log('handleZoomChange', currentState, size.width, size.height);
-			}
-		}
-	};
-
+	const shouldUpdateLayer = useCallback(() => {
+		return !!image || annotations.length > 0;
+	}, [image, annotations]);
 	useEffect(() => {
 		// 组件挂载时初始化尺寸
 		updateSize();
@@ -93,7 +59,6 @@ export default function FileReview() {
 		// 组件卸载时清理事件监听
 		return () => window.removeEventListener('resize', updateSize);
 	}, [updateSize]);
-
 	useEffect(() => {
 		// 当图片和容器尺寸都准备好时，计算图片的尺寸
 		if (image && containerDimensions.width > 0 && containerDimensions.height > 0) {
@@ -118,16 +83,10 @@ export default function FileReview() {
 			setSize({ width, height, x, y });
 		}
 	}, [image, containerDimensions]);
-	// 图层优化：只有在图片或者注释框变化时才重新渲染
-	const shouldUpdateLayer = useCallback(() => {
-		return !!image || annotations.length > 0;
-	}, [image, annotations]);
 	return (
 		<div className="wrap">
 			<main className="img-review" ref={containerRef}>
 				<TransformWrapper
-					onWheel={onWheelChange}
-					onPanning={onPanningChange}
 					ref={TransformWrapperRef}
 					panning={{ velocityDisabled: true }}
 					limitToBounds={false}
@@ -163,11 +122,12 @@ export default function FileReview() {
 						</Stage>
 					</TransformComponent>
 				</TransformWrapper>
+				<ScanLoading ref={ScanLoadingRef} />
+				<ImgControlBtns handleChangeInputValue={handleChangeInputValue} />
 			</main>
 			<footer className="tools-row">
-				<DecimalStep ref={DecimalStepRef} handleZoomChange={handleZoomChange} />
-				<RotateBtns resetImage={resetImage} />
-				<Button onClick={resetImage}>还原测试</Button>
+				<div onClick={() => ScanLoadingRef.current.setScanLoading(true)}>识别</div>
+				<div onClick={() => ScanLoadingRef.current.setScanLoading(false)}>关闭</div>
 			</footer>
 		</div>
 	);

@@ -2,6 +2,7 @@ import React from 'react';
 import './App.less';
 import { Layout, Row, Col } from 'antd';
 import FileReview from './components/FileReview';
+import AnalysisResult from './components/AnalysisResult';
 const { Content } = Layout;
 function App() {
 	return (
@@ -13,7 +14,7 @@ function App() {
 						<FileReview />
 					</Col>
 					<Col className="gutter-row" span={11}>
-						12
+						<AnalysisResult />
 					</Col>
 				</Row>
 			</div>
