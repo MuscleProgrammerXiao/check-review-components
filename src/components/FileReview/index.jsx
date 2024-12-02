@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useState, useMemo, useImperativeHandle } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { Stage, Layer, Rect, Image } from 'react-konva';
 import ImgControlBtns from './components/ImgControlBtns';
@@ -7,13 +7,14 @@ import ScanLoading from './components/ScanLoading';
 import inovice1 from '../../assets/invoice1.jpg';
 import './index.less';
 
-export default function FileReview() {
+const FileReview = React.forwardRef((prop, ref) => {
 	const containerRef = useRef(null);
 	const TransformWrapperRef = useRef(null);
 	const ScanLoadingRef = useRef(null);
 	const [image] = useImage(inovice1); // 加载图片
 	const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 }); // 父容器的尺寸
 	const [size, setSize] = useState({ width: 0, height: 0, x: 0, y: 0 }); // 图片的尺寸和位置
+
 	const annotations = useMemo(
 		() => [
 			// 管理注释框的位置
@@ -83,52 +84,64 @@ export default function FileReview() {
 			setSize({ width, height, x, y });
 		}
 	}, [image, containerDimensions]);
+
+	useImperativeHandle(ref, () => ({
+		/* 控制扫描loading */
+		controlScanLoading: (val) => {
+			if (ScanLoadingRef.current) {
+				ScanLoadingRef.current.setScanLoading(val);
+			}
+		},
+	}));
 	return (
 		<div className="wrap">
 			<main className="img-review" ref={containerRef}>
-				<TransformWrapper
-					ref={TransformWrapperRef}
-					panning={{ velocityDisabled: true }}
-					limitToBounds={false}
-					minScale={0.5}
-					maxScale={2}
-					initialScale={1}
-				>
-					<TransformComponent>
-						<Stage width={containerDimensions.width} height={containerDimensions.height}>
-							<Layer shouldComponentUpdate={shouldUpdateLayer}>
-								<Image
-									x={size.x} // 图片的 X 坐标
-									y={size.y} // 图片的 Y 坐标
-									width={size.width} // 图片的宽度
-									height={size.height} // 图片的高度
-									image={image} // 渲染的图片
-								/>
-							</Layer>
-							<Layer shouldComponentUpdate={shouldUpdateLayer}>
-								{annotations.map((annotation, index) => (
-									<Rect
-										key={index}
-										x={annotation.x}
-										y={annotation.y}
-										width={annotation.width}
-										height={annotation.height}
-										stroke={annotation.color}
-										strokeWidth={3}
-										dash={[10, 5]} // 虚线
+				<>
+					<TransformWrapper
+						ref={TransformWrapperRef}
+						panning={{ velocityDisabled: true }}
+						limitToBounds={false}
+						minScale={0.5}
+						maxScale={2}
+						initialScale={1}
+					>
+						<TransformComponent>
+							<Stage width={containerDimensions.width} height={containerDimensions.height}>
+								<Layer shouldComponentUpdate={shouldUpdateLayer}>
+									<Image
+										x={size.x} // 图片的 X 坐标
+										y={size.y} // 图片的 Y 坐标
+										width={size.width} // 图片的宽度
+										height={size.height} // 图片的高度
+										image={image} // 渲染的图片
 									/>
-								))}
-							</Layer>
-						</Stage>
-					</TransformComponent>
-				</TransformWrapper>
+								</Layer>
+								<Layer shouldComponentUpdate={shouldUpdateLayer}>
+									{annotations.map((annotation, index) => (
+										<Rect
+											key={index}
+											x={annotation.x}
+											y={annotation.y}
+											width={annotation.width}
+											height={annotation.height}
+											stroke={annotation.color}
+											strokeWidth={3}
+											dash={[10, 5]} // 虚线
+										/>
+									))}
+								</Layer>
+							</Stage>
+						</TransformComponent>
+					</TransformWrapper>
+					<ImgControlBtns handleChangeInputValue={handleChangeInputValue} />
+				</>
 				<ScanLoading ref={ScanLoadingRef} />
-				<ImgControlBtns handleChangeInputValue={handleChangeInputValue} />
 			</main>
 			<footer className="tools-row">
-				<div onClick={() => ScanLoadingRef.current.setScanLoading(true)}>识别</div>
-				<div onClick={() => ScanLoadingRef.current.setScanLoading(false)}>关闭</div>
+				{/* <div onClick={() => ScanLoadingRef.current.setScanLoading(true)}>识别</div>
+				<div onClick={() => ScanLoadingRef.current.setScanLoading(false)}>关闭</div> */}
 			</footer>
 		</div>
 	);
-}
+});
+export default FileReview;
