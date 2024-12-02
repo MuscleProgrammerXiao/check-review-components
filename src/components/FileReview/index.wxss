@@ -4,10 +4,16 @@
   box-sizing: border-box;
 }
 .wrap .img-review {
+  box-sizing: border-box;
   width: 100%;
   height: calc(100% - 75px);
+  background-image: linear-gradient(0deg, transparent 24%, rgba(24, 144, 255, 0.1) 25%, rgba(24, 144, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(24, 144, 255, 0.1) 75%, rgba(24, 144, 255, 0.1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(24, 144, 255, 0.1) 25%, rgba(24, 144, 255, 0.1) 26%, transparent 27%, transparent 74%, rgba(24, 144, 255, 0.1) 75%, rgba(24, 144, 255, 0.1) 76%, transparent 77%, transparent);
+  background-size: 3rem 3rem;
+  background-position: -1rem -1rem;
   background-color: #f4f6fc;
+  border: 1px solid rgba(24, 144, 255, 0.1);
   cursor: grabbing;
+  position: relative;
 }
 .wrap .tools-row {
   margin-top: 15px;
