@@ -21,12 +21,12 @@ function App() {
 		if (!FileReviewRef.current) return;
 		FileReviewRef.current.controlScanLoading(true);
 		setTimeout(() => {
-			const resData = invoiceOcrsRspData.filter(item => item.data.docId === params.docId);
+			const resData = invoiceOcrsRspData.filter((item) => item.data.docId === params.docId);
 			FileReviewRef.current.controlScanLoading(false);
 			if (resData.length === 0) return;
 			FileReviewRef.current.renderOcrRects(resData[0].data.list);
-		}, 3000);
-	}
+		}, 1500);
+	};
 	useEffect(() => {
 		getImgListRsp();
 	}, []);

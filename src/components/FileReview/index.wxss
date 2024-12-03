@@ -16,11 +16,8 @@
   position: relative;
 }
 .wrap .tools-row {
+  width: 100%;
   margin-top: 15px;
-  height: 60px;
+  padding: 0 15px;
   border: 1px solid #f5f5f5;
-  display: grid;
-  align-items: center;
-  grid-template-columns: repeat(3, 1fr);
-  /* 3 列，每列占1/3宽度 */
 }

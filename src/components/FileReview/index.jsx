@@ -1,43 +1,62 @@
 import React, { useEffect, useRef, useCallback, useState, useImperativeHandle } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { Stage, Layer, Rect, Image } from 'react-konva';
-import ImgControlBtns from './components/ImgControlBtns';
 import useImage from 'use-image';
 import ScanLoading from './components/ScanLoading';
+import ImgControlBtns from './components/ImgControlBtns';
+import NumberPagination from './components/NumberPagination';
+import PreviewImage from './components/PreviewImage';
 import './index.less';
-const RectColor = 'red';
-const FileReview = React.forwardRef((prop, ref) => {
-	const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 }); // 父容器的尺寸
-	const [size, setSize] = useState({ width: 0, height: 0, x: 0, y: 0 }); // 图片的尺寸和位置
+
+const RectColor = 'rgba(24, 144, 255)';
+const RectFillColor = 'rgba(24, 144, 255, 0.1)';
+
+const FileReview = React.forwardRef((props, ref) => {
+	const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+	const [size, setSize] = useState({ width: 0, height: 0, x: 0, y: 0 });
+	const [viewData, setViewData] = useState([]);
+	const [pageInfo, setPageInfo] = useState({ total: 0, pageIndex: 1, url: '', docId: '' });
+	const [image, status] = useImage(pageInfo.url);
+	const [annotations, setAnnotations] = useState([]);
+
 	const containerRef = useRef(null);
 	const TransformWrapperRef = useRef(null);
 	const ScanLoadingRef = useRef(null);
-	const [viewData, setViewData] = useState([]);
-	const [pageInfo, setPageInfo] = useState({
-		total: null,
-		pageIndex: 1,
-		url: '',
-		docId: '',
-	});
-	const [image, status] = useImage(pageInfo.url); // 加载图片
-	const [annotations, setAnnotations] = useState([]);
+	const NumberPaginationRef = useRef(null);
+	const RectLayerRef = useRef(null);
+	const PreviewImageRef = useRef(null);
+
 	/* 初始化影像列表 */
 	const initImageList = useCallback(
 		(initData) => {
-			// 初始化图片列表
 			const { total, list } = initData.data;
-			if (list.length === 0) return; //这里当图片列表为空，渲染图片为空的dom
+			if (list.length === 0) return;
 			const { docId, pageIndex, url } = list[pageInfo.pageIndex - 1];
 			setPageInfo({ total, pageIndex, url, docId });
+			NumberPaginationRef.current.changePageIndex({ total, pageIndex, url, docId });
 			setViewData(list);
-			console.log('图片列表', viewData);
 		},
-		[pageInfo, viewData]
+		[pageInfo.pageIndex]
 	);
-	/* 渲染ocrs识别的坐标 */
+
+	/* 渲染 OCR 坐标 */
 	const renderOcrRects = useCallback((ocrData) => {
 		setAnnotations(ocrData);
+		RectLayerRef.current?.draw();
 	}, []);
+
+	/* 切换图片 */
+	const changePageIndex = useCallback(
+		(val) => {
+			const { pageIndex, url, docId } = viewData[val - 1];
+			RectLayerRef.current.clear();
+			setPageInfo((prev) => ({ ...prev, pageIndex, url, docId }));
+			NumberPaginationRef.current.changePageIndex({ ...pageInfo, pageIndex, url, docId });
+		},
+		[viewData, pageInfo]
+	);
+
+	/* 操作图片缩放 */
 	const handleChangeInputValue = (val) => {
 		switch (val) {
 			case 'increase':
@@ -49,11 +68,15 @@ const FileReview = React.forwardRef((prop, ref) => {
 			case 'reset':
 				TransformWrapperRef.current.resetTransform();
 				break;
+			case 'preview':
+				PreviewImageRef.current.initPreviewImageModalData({ viewData, pageInfo });
+				break;
 			default:
 				break;
 		}
 	};
 
+	/* 更新容器尺寸 */
 	const updateSize = useCallback(() => {
 		if (containerRef.current) {
 			const { offsetWidth, offsetHeight } = containerRef.current;
@@ -62,28 +85,15 @@ const FileReview = React.forwardRef((prop, ref) => {
 			}
 		}
 	}, [containerDimensions.width, containerDimensions.height]);
-	const shouldUpdateLayer = useCallback(() => {
-		return !!image || annotations.length > 0;
-	}, [image, annotations]);
-	useEffect(() => {
-		// 组件挂载时初始化尺寸
-		updateSize();
 
-		// 窗口尺寸变化时更新父容器尺寸
-		window.addEventListener('resize', updateSize);
-
-		// 组件卸载时清理事件监听
-		return () => window.removeEventListener('resize', updateSize);
-	}, [updateSize]);
+	/* 计算图片尺寸 */
 	useEffect(() => {
-		// 当图片和容器尺寸都准备好时，计算图片的尺寸
 		if (image && containerDimensions.width > 0 && containerDimensions.height > 0) {
 			const imageRatio = image.width / image.height;
 			const containerRatio = containerDimensions.width / containerDimensions.height;
 			let width, height;
 
 			if (imageRatio > containerRatio) {
-				// 如果图片宽度大于高度，宽度设为父容器的宽度
 				width = containerDimensions.width;
 				height = width / imageRatio;
 			} else {
@@ -91,80 +101,80 @@ const FileReview = React.forwardRef((prop, ref) => {
 				width = height * imageRatio;
 			}
 
-			// 计算居中的 X 和 Y 坐标
-			const x = (containerDimensions.width - width) / 2;
-			const y = (containerDimensions.height - height) / 2;
-
-			// 更新图片的尺寸和位置
-			setSize({ width, height, x, y });
+			setSize({
+				width,
+				height,
+				x: (containerDimensions.width - width) / 2,
+				y: (containerDimensions.height - height) / 2,
+			});
 		}
 	}, [image, containerDimensions]);
-	// 监听 status 和 image 变化
+
+	/* 监听图片加载完成并发送 OCR 请求 */
 	useEffect(() => {
 		if (status === 'loaded') {
-			prop.sendOcrReq(pageInfo);
+			props.sendOcrReq(pageInfo);
 		}
-	}, [status, image, pageInfo, prop]);
+	}, [status, pageInfo, props]);
 
+	/* 初始化容器大小和事件监听 */
+	useEffect(() => {
+		updateSize();
+		window.addEventListener('resize', updateSize);
+		return () => window.removeEventListener('resize', updateSize);
+	}, [updateSize]);
+
+	/* 暴露方法给父组件 */
 	useImperativeHandle(ref, () => ({
-		/* 控制扫描loading */
 		controlScanLoading: (val) => {
-			if (ScanLoadingRef.current) {
-				ScanLoadingRef.current.setScanLoading(val);
-			}
+			ScanLoadingRef.current?.setScanLoading(val);
 		},
 		initImageList,
 		renderOcrRects,
 	}));
+
 	return (
 		<div className="wrap">
 			<main className="img-review" ref={containerRef}>
-				<>
-					<TransformWrapper
-						ref={TransformWrapperRef}
-						panning={{ velocityDisabled: true }}
-						limitToBounds={false}
-						minScale={0.5}
-						maxScale={2}
-						initialScale={1}
-					>
-						<TransformComponent>
-							<Stage width={containerDimensions.width} height={containerDimensions.height}>
-								<Layer shouldComponentUpdate={shouldUpdateLayer}>
-									<Image
-										x={size.x} // 图片的 X 坐标
-										y={size.y} // 图片的 Y 坐标
-										width={size.width} // 图片的宽度
-										height={size.height} // 图片的高度
-										image={image} // 渲染的图片
+				<TransformWrapper
+					ref={TransformWrapperRef}
+					panning={{ velocityDisabled: true }}
+					limitToBounds={false}
+					minScale={0.5}
+					maxScale={2}
+					initialScale={1}
+				>
+					<TransformComponent>
+						<Stage width={containerDimensions.width} height={containerDimensions.height}>
+							<Layer>
+								<Image x={size.x} y={size.y} width={size.width} height={size.height} image={image} />
+							</Layer>
+							<Layer ref={RectLayerRef}>
+								{annotations.map((annotation, index) => (
+									<Rect
+										key={index}
+										x={annotation.point.x}
+										y={annotation.point.y}
+										width={annotation.point.width}
+										height={annotation.point.height}
+										stroke={RectColor}
+										fill={RectFillColor}
+										strokeWidth={2}
 									/>
-								</Layer>
-								<Layer shouldComponentUpdate={shouldUpdateLayer}>
-									{annotations.map((annotation, index) => (
-										<Rect
-											key={index}
-											x={annotation.point.x}
-											y={annotation.point.y}
-											width={annotation.point.width}
-											height={annotation.point.height}
-											stroke={RectColor}
-											strokeWidth={2}
-											// dash={[10, 5]} // 虚线
-										/>
-									))}
-								</Layer>
-							</Stage>
-						</TransformComponent>
-					</TransformWrapper>
-					<ImgControlBtns handleChangeInputValue={handleChangeInputValue} />
-				</>
+								))}
+							</Layer>
+						</Stage>
+					</TransformComponent>
+				</TransformWrapper>
+				<ImgControlBtns handleChangeInputValue={handleChangeInputValue} />
 				<ScanLoading ref={ScanLoadingRef} />
 			</main>
 			<footer className="tools-row">
-				{/* <div onClick={() => ScanLoadingRef.current.setScanLoading(true)}>识别</div>
-				<div onClick={() => ScanLoadingRef.current.setScanLoading(false)}>关闭</div> */}
+				<NumberPagination ref={NumberPaginationRef} changePageIndex={changePageIndex} />
 			</footer>
+			<PreviewImage ref={PreviewImageRef} />
 		</div>
 	);
 });
+
 export default FileReview;
