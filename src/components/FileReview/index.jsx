@@ -6,6 +6,7 @@ import ScanLoading from './components/ScanLoading';
 import ImgControlBtns from './components/ImgControlBtns';
 import NumberPagination from './components/NumberPagination';
 import PreviewImage from './components/PreviewImage';
+// import useStore from '../../store';
 import './index.less';
 
 const RectColor = 'rgba(24, 144, 255)';
@@ -18,7 +19,7 @@ const FileReview = React.forwardRef((props, ref) => {
 	const [pageInfo, setPageInfo] = useState({ total: 0, pageIndex: 1, url: '', docId: '' });
 	const [image, status] = useImage(pageInfo.url);
 	const [annotations, setAnnotations] = useState([]);
-
+	// const { setCurrentPaginationViewData, setCurrentPaginationPageInfo } = useStore();
 	const containerRef = useRef(null);
 	const TransformWrapperRef = useRef(null);
 	const ScanLoadingRef = useRef(null);
@@ -70,6 +71,8 @@ const FileReview = React.forwardRef((props, ref) => {
 				break;
 			case 'preview':
 				PreviewImageRef.current.initPreviewImageModalData({ viewData, pageInfo });
+				// setCurrentPaginationViewData(viewData);
+				// setCurrentPaginationPageInfo(pageInfo);
 				break;
 			default:
 				break;

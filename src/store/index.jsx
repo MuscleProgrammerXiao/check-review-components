@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 
-// import
+import previewImgStore from './modules/previewImgStore';
 
 const useStore = create((set) => ({
-	rotate: 0,
-	setRotate: (rotate) => set({ rotate }),
+	...previewImgStore(...set),
 }));
 export default useStore;

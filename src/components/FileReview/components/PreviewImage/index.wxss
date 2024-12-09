@@ -1,10 +1,21 @@
 .preview-image {
   width: 100%;
   height: 100%;
+  background-color: #888;
 }
 .preview-image .gutter-row {
+  width: 100%;
   height: 100%;
 }
 .preview-image .gutter-row .ceil-item {
+  width: 100%;
+  height: 100%;
+}
+.preview-image .gutter-row .preview {
+  padding: 10px 40px;
+  background-color: #888;
+}
+.preview-image .gutter-row .preview > img {
+  width: 100%;
   height: 100%;
 }

@@ -4,13 +4,27 @@ import { Modal, Col, Row } from 'antd';
 import ImagePagination from '../ImagePagination';
 import './index.less';
 const PreviewImage = React.forwardRef((prop, ref) => {
-	const [isModalOpen, setIsModalOpen] = useState(true);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [renderImage, setRenderImage] = useState('');
 	const ImagePaginationRef = useRef(null);
-	useImperativeHandle(ref, () => ({
-		initPreviewImageModalData: (val) => {
-			setIsModalOpen(true);
+
+	const initRenderImage = (url) => {
+		// const { currentPaginationViewData, currentPaginationPageInfo } = useStore();
+		// ImagePaginationRef.current.initPaginationData({ viewData: currentPaginationViewData, pageInfo: currentPaginationPageInfo });
+		console.log('url', url);
+		setRenderImage(url);
+	};
+
+	const initPreviewImageModalData = (val) => {
+		setIsModalOpen(true);
+		setTimeout(() => {
 			ImagePaginationRef.current.initPaginationData(val);
-		},
+			initRenderImage(val.pageInfo.url);
+		}, 500);
+	};
+
+	useImperativeHandle(ref, () => ({
+		initPreviewImageModalData,
 	}));
 	return (
 		<Modal
@@ -19,20 +33,22 @@ const PreviewImage = React.forwardRef((prop, ref) => {
 			open={isModalOpen}
 			onCancel={() => setIsModalOpen(false)}
 			width="100vw"
-			bodyStyle={{ height: 'calc(100vh - 20px)', padding: '0px' }}
+			bodyStyle={{ height: 'calc(100vh - 20px)', padding: '0px', backgroundColor: '#888' }}
 		>
 			<Row gutter={16} className="preview-image">
 				<Col className="gutter-row" span={3}>
 					<div className="pagination-image ceil-item">
-						<ImagePagination ref={ImagePaginationRef} />
+						<ImagePagination ref={ImagePaginationRef} initRenderImage={initRenderImage} />
 					</div>
 				</Col>
-				<Col className="gutter-row" span={15}>
-					<div className="preview ceil-item">图像</div>
+				<Col className="gutter-row" span={21}>
+					<div className="preview ceil-item">
+						<img src={renderImage} alt="" />
+					</div>
 				</Col>
-				<Col className="gutter-row" span={6}>
+				{/* <Col className="gutter-row" span={6}>
 					<div className="ocrResult ceil-item">识别内容</div>
-				</Col>
+				</Col> */}
 			</Row>
 		</Modal>
 	);
