@@ -5,24 +5,37 @@ import ImagePagination from '../ImagePagination';
 import './index.less';
 const PreviewImage = React.forwardRef((prop, ref) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [renderImage, setRenderImage] = useState('');
+	const [imageSrc, setRenderImageSrc] = useState('');
+	const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
 	const ImagePaginationRef = useRef(null);
-
+	const containerRef = useRef(null);
 	const initRenderImage = (url) => {
-		// const { currentPaginationViewData, currentPaginationPageInfo } = useStore();
-		// ImagePaginationRef.current.initPaginationData({ viewData: currentPaginationViewData, pageInfo: currentPaginationPageInfo });
-		console.log('url', url);
-		setRenderImage(url);
+		setRenderImageSrc(url);
 	};
-
 	const initPreviewImageModalData = (val) => {
 		setIsModalOpen(true);
 		setTimeout(() => {
 			ImagePaginationRef.current.initPaginationData(val);
+			console.log('containerRef', containerRef.current);
+			const { offsetWidth, offsetHeight } = containerRef.current;
+			const img = new window.Image();
+			img.src = val.pageInfo.url; // 替换成你的图片路径
+
+			const imageRatio = img.width / img.height;
+			const containerRatio = (offsetWidth - 50) / (offsetHeight - 50);
+			let width, height;
+			if (imageRatio > containerRatio) {
+				width = offsetWidth - 50;
+				height = width / imageRatio;
+			} else {
+				height = offsetHeight - 50;
+				width = height * imageRatio;
+			}
+			setImgSize({ width, height });
 			initRenderImage(val.pageInfo.url);
 		}, 500);
 	};
-
+	/* 计算图片尺寸 */
 	useImperativeHandle(ref, () => ({
 		initPreviewImageModalData,
 	}));
@@ -42,13 +55,10 @@ const PreviewImage = React.forwardRef((prop, ref) => {
 					</div>
 				</Col>
 				<Col className="gutter-row" span={21}>
-					<div className="preview ceil-item">
-						<img src={renderImage} alt="" />
+					<div className="preview ceil-item" ref={containerRef}>
+						<img src={imageSrc} alt="" height={imgSize.height} width={imgSize.width} />
 					</div>
 				</Col>
-				{/* <Col className="gutter-row" span={6}>
-					<div className="ocrResult ceil-item">识别内容</div>
-				</Col> */}
 			</Row>
 		</Modal>
 	);
