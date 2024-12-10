@@ -1,24 +1,57 @@
 .preview-image{
     width: 100%;
     height: 100%;
-    background-color: #888;
-    .gutter-row{
+    .gutter-row-l{
         width: 100%;
         height: 100%;
         .ceil-item{
             width: 100%;
             height: 100%;
         }
+    }
+    .gutter-row-r{
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
         .preview{
-            padding: 10px 40px;
-            background-color: yellow;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            background-image:linear-gradient(0deg,transparent 24%,rgba(24, 144, 255, 0.1) 25%,rgba(24, 144, 255, 0.1) 26%,transparent 27%,transparent 74%,rgba(24, 144, 255, 0.1) 75%,rgba(24, 144, 255, 0.1) 76%,transparent 77%,transparent),
+            linear-gradient(90deg,transparent 24%,rgba(24, 144, 255, 0.1) 25%,rgba(24, 144, 255, 0.1) 26%,transparent 27%,transparent 74%,rgba(24, 144, 255, 0.1) 75%,rgba(24, 144, 255, 0.1) 76%,transparent 77%,transparent);
+            background-size: 3rem 3rem;
+            background-position: -1rem -1rem;
+            background-color: #f4f6fc;
+            border: 1px solid rgba(24, 144, 255, 0.1);
+            border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            // >img{
-            //     width: 100%;
-            //     height: 100%;
-            // }
+        }
+        .change-current-btns{
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top:calc(50% - 65px);
+            width: 28px;
+            border-radius: 5px;
+            height: 130px;
+            background-color: #fff;
+            box-shadow: rgba(0, 0, 0, 0.13) 0px 6.4px 14.4px, rgba(0, 0, 0, 0.11) 0px 0px 5.6px;
+            cursor: pointer;
+        }
+        .change-current-btns:hover{
+            background-color: #eee;
+            transition: 0.5s all ease;
+        }
+        .btns-l{
+            left:50px;
+        }
+        .btns-r{
+            right: 50px;
         }
     }
+    
 }

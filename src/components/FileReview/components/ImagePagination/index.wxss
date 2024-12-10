@@ -25,6 +25,13 @@
   padding: 5px;
   cursor: pointer;
 }
+.image-pagenation .wrap .imglist .imglist-item > img {
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+  object-fit: contain;
+}
 .image-pagenation .wrap .imglist::-webkit-scrollbar {
   width: 6px;
   height: 12px;

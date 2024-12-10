@@ -1,5 +1,7 @@
 /* 图像预览组件 */
-import React, { useImperativeHandle, useState, useRef } from 'react';
+import React, { useImperativeHandle, useState, useRef, useEffect } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { Modal, Col, Row } from 'antd';
 import ImagePagination from '../ImagePagination';
 import './index.less';
@@ -8,34 +10,52 @@ const PreviewImage = React.forwardRef((prop, ref) => {
 	const [imageSrc, setRenderImageSrc] = useState('');
 	const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
 	const ImagePaginationRef = useRef(null);
-	const containerRef = useRef(null);
-	const initRenderImage = (url) => {
-		setRenderImageSrc(url);
-	};
+	const ComponentRef = useRef(null);
 	const initPreviewImageModalData = (val) => {
 		setIsModalOpen(true);
 		setTimeout(() => {
+			setRenderImageSrc(val.pageInfo.url);
 			ImagePaginationRef.current.initPaginationData(val);
-			console.log('containerRef', containerRef.current);
-			const { offsetWidth, offsetHeight } = containerRef.current;
-			const img = new window.Image();
-			img.src = val.pageInfo.url; // 替换成你的图片路径
-
-			const imageRatio = img.width / img.height;
-			const containerRatio = (offsetWidth - 50) / (offsetHeight - 50);
-			let width, height;
-			if (imageRatio > containerRatio) {
-				width = offsetWidth - 50;
-				height = width / imageRatio;
-			} else {
-				height = offsetHeight - 50;
-				width = height * imageRatio;
-			}
-			setImgSize({ width, height });
-			initRenderImage(val.pageInfo.url);
-		}, 500);
+		}, 200);
+	};
+	const changeCurrentImage = (val) => {
+		ImagePaginationRef.current.changeCurrentImage(val);
 	};
 	/* 计算图片尺寸 */
+	useEffect(() => {
+		const img = new Image();
+		img.src = imageSrc;
+		if (!ComponentRef.current) return;
+		const { offsetWidth, offsetHeight } = ComponentRef.current;
+		const imageRatio = img.width / img.height;
+		const containerRatio = offsetWidth / offsetHeight;
+		let width, height;
+		if (imageRatio > containerRatio) {
+			width = (offsetWidth * 9) / 10;
+			height = width / imageRatio;
+		} else {
+			height = (offsetHeight * 9) / 10;
+			width = height * imageRatio;
+		}
+		setImgSize({ width, height });
+	}, [imageSrc]);
+
+	useEffect(() => {
+		if (!isModalOpen) return;
+		const handleKeyDown = (event) => {
+			if (event.key === 'ArrowLeft') {
+				changeCurrentImage('back');
+			} else if (event.key === 'ArrowRight') {
+				changeCurrentImage('next');
+			}
+		};
+		// 添加事件监听
+		window.addEventListener('keydown', handleKeyDown);
+		// 清除事件监听器
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [isModalOpen]);
 	useImperativeHandle(ref, () => ({
 		initPreviewImageModalData,
 	}));
@@ -46,17 +66,30 @@ const PreviewImage = React.forwardRef((prop, ref) => {
 			open={isModalOpen}
 			onCancel={() => setIsModalOpen(false)}
 			width="100vw"
-			bodyStyle={{ height: 'calc(100vh - 20px)', padding: '0px', backgroundColor: '#888' }}
+			bodyStyle={{ height: 'calc(100vh - 50px)', padding: '0px' }}
 		>
 			<Row gutter={16} className="preview-image">
-				<Col className="gutter-row" span={3}>
+				<Col className="gutter-row-l" span={3}>
 					<div className="pagination-image ceil-item">
-						<ImagePagination ref={ImagePaginationRef} initRenderImage={initRenderImage} />
+						<ImagePagination
+							ref={ImagePaginationRef}
+							initRenderImage={(url) => {
+								setRenderImageSrc(url);
+							}}
+						/>
 					</div>
 				</Col>
-				<Col className="gutter-row" span={21}>
-					<div className="preview ceil-item" ref={containerRef}>
-						<img src={imageSrc} alt="" height={imgSize.height} width={imgSize.width} />
+				<Col className="gutter-row-r" span={21} ref={ComponentRef}>
+					<TransformWrapper panning={{ velocityDisabled: true }} limitToBounds={false} minScale={0.5} maxScale={2} initialScale={1}>
+						<TransformComponent wrapperClass="preview ceil-item">
+							<img src={imageSrc} alt="" height={imgSize.height} width={imgSize.width} />
+						</TransformComponent>
+					</TransformWrapper>
+					<div onClick={() => changeCurrentImage('back')} className="change-current-btns btns-l">
+						<CaretLeftOutlined style={{ fontSize: '24px', color: '#333' }} />
+					</div>
+					<div onClick={() => changeCurrentImage('next')} className="change-current-btns btns-r">
+						<CaretRightOutlined style={{ fontSize: '24px', color: '#333' }} />
 					</div>
 				</Col>
 			</Row>

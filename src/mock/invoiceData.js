@@ -7,12 +7,16 @@ import invoice2 from '../assets/invoice2.jpg';
 import invoice3 from '../assets/invoice3.jpg';
 import invoice4 from '../assets/invoice4.jpg';
 import invoice5 from '../assets/invoice5.png';
+import hetong1 from '../assets/hetong1.jpg';
+import hetong2 from '../assets/hetong2.jpg';
+import hetong3 from '../assets/hetong3.jpg';
+import hetong4 from '../assets/hetong4.jpg';
 
 export const invoiceImgListRsponse = {
 	code: 200,
 	msg: 'success',
 	data: {
-		total: 5,
+		total: 9,
 		list: [
 			{
 				docId: 'invoice0001',
@@ -38,6 +42,26 @@ export const invoiceImgListRsponse = {
 				docId: 'invoice0005',
 				url: invoice5,
 				pageIndex: 5,
+			},
+			{
+				docId: 'hetong0001',
+				url: hetong1,
+				pageIndex: 6,
+			},
+			{
+				docId: 'hetong0002',
+				url: hetong2,
+				pageIndex: 7,
+			},
+			{
+				docId: 'hetong0003',
+				url: hetong3,
+				pageIndex: 8,
+			},
+			{
+				docId: 'hetong0004',
+				url: hetong4,
+				pageIndex: 9,
 			},
 		],
 	},
